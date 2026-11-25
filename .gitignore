@@ -1,0 +1,13 @@
+# keys never go to Git
+*.ppk
+*.pem
+# Terraform working files and state
+.terraform/
+*.tfstate
+*.tfstate.*
+.terraform.lock.hcl
+crash.log
+# editors and OS
+.vscode/
+.DS_Store
+Thumbs.db

@@ -1,0 +1,15 @@
+configs:
+  params:
+    server.insecure: true
+  cm:
+    timeout.reconciliation: 60s
+    accounts.dev1: login
+  rbac:
+    policy.default: role:readonly
+
+dex:
+  enabled: false
+
+server:
+  service:
+    type: LoadBalancer

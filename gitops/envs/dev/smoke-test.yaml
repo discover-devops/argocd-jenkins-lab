@@ -1,0 +1,16 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: smoke-test
+  annotations:
+    argocd.argoproj.io/hook: PostSync
+    argocd.argoproj.io/hook-delete-policy: BeforeHookCreation
+spec:
+  backoffLimit: 2
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: smoke-test
+          image: public.ecr.aws/docker/library/busybox:stable
+          command: ["sh", "-c", "for i in 1 2 3 4 5 6 7 8 9 10; do wget -qO- http://quickkart/health && echo SMOKE TEST PASSED && exit 0; sleep 3; done; echo SMOKE TEST FAILED; exit 1"]

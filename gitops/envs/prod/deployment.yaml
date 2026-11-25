@@ -1,0 +1,35 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: quickkart
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: quickkart
+  template:
+    metadata:
+      labels:
+        app: quickkart
+    spec:
+      containers:
+        - name: quickkart
+          image: __ECR_REPO__:__IMAGE_TAG__
+          ports:
+            - containerPort: 8080
+          envFrom:
+            - configMapRef:
+                name: quickkart-config
+          env:
+            - name: SECRET_MESSAGE
+              valueFrom:
+                secretKeyRef:
+                  name: quickkart-secret
+                  key: SECRET_MESSAGE
+                  optional: true
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8080

@@ -1,0 +1,76 @@
+#!/bin/bash
+# First boot script for the jumpbox. Log: /var/log/cloud-init-output.log
+set -x
+export DEBIAN_FRONTEND=noninteractive
+
+# ---------- lab settings for every login ----------
+cat > /etc/profile.d/lab.sh <<'LAB'
+export AWS_REGION=${region}
+export AWS_DEFAULT_REGION=${region}
+export CLUSTER_NAME=${cluster_name}
+export ECR_REPO=${ecr_repo}
+LAB
+
+apt-get update -y
+apt-get install -y unzip curl wget git jq ca-certificates gnupg lsb-release fontconfig openjdk-21-jre-headless docker.io docker-buildx
+
+# ---------- AWS CLI v2 ----------
+cd /tmp
+curl -sSL "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o awscliv2.zip
+unzip -q -o awscliv2.zip && ./aws/install --update
+
+# ---------- kubectl ----------
+curl -sSLO "https://dl.k8s.io/release/$(curl -sSL https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+install -m 0755 kubectl /usr/local/bin/kubectl
+
+# ---------- Helm ----------
+curl -fsSL https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+
+# ---------- Terraform ----------
+wget -qO- https://apt.releases.hashicorp.com/gpg | gpg --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg
+echo "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com $(lsb_release -cs) main" > /etc/apt/sources.list.d/hashicorp.list
+
+# ---------- GitHub CLI ----------
+mkdir -p -m 755 /etc/apt/keyrings
+wget -qO- https://cli.github.com/packages/githubcli-archive-keyring.gpg > /etc/apt/keyrings/githubcli-archive-keyring.gpg
+chmod go+r /etc/apt/keyrings/githubcli-archive-keyring.gpg
+echo "deb [arch=amd64 signed-by=/etc/apt/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" > /etc/apt/sources.list.d/github-cli.list
+
+# ---------- Jenkins LTS (2026 signing key) ----------
+wget -q -O /etc/apt/keyrings/jenkins-keyring.asc https://pkg.jenkins.io/debian-stable/jenkins.io-2026.key
+echo "deb [signed-by=/etc/apt/keyrings/jenkins-keyring.asc] https://pkg.jenkins.io/debian-stable binary/" > /etc/apt/sources.list.d/jenkins.list
+
+apt-get update -y
+apt-get install -y terraform gh jenkins
+
+# ---------- kubeseal (Sealed Secrets CLI) ----------
+KS_URL=$(curl -sSL -o /dev/null -w '%%{url_effective}' https://github.com/bitnami/sealed-secrets/releases/latest)
+KS=$${KS_URL##*/}
+curl -fsSLO "https://github.com/bitnami/sealed-secrets/releases/download/$KS/kubeseal-$${KS#v}-linux-amd64.tar.gz"
+tar -xzf "kubeseal-$${KS#v}-linux-amd64.tar.gz" kubeseal && install -m 0755 kubeseal /usr/local/bin/kubeseal
+
+# ---------- Argo CD CLI ----------
+curl -fsSL -o argocd https://github.com/argoproj/argo-cd/releases/latest/download/argocd-linux-amd64
+install -m 0755 argocd /usr/local/bin/argocd
+
+# ---------- Docker for ubuntu and Jenkins ----------
+systemctl enable --now docker
+usermod -aG docker ubuntu
+usermod -aG docker jenkins
+systemctl enable jenkins
+systemctl restart jenkins
+
+# ---------- done: versions for a quick check ----------
+{
+  echo "LAB TOOLS READY $(date)"
+  aws --version
+  kubectl version --client | head -1
+  helm version --short
+  terraform version | head -1
+  gh --version | head -1
+  kubeseal --version
+  argocd version --client --short
+  docker --version
+  java -version 2>&1 | head -1
+  systemctl is-active jenkins
+} > /var/tmp/lab-ready.txt 2>&1

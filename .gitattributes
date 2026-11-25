@@ -1,0 +1,4 @@
+# Keep Linux line endings everywhere. Scripts and user_data break with Windows CRLF.
+* text=auto eol=lf
+*.ppk binary
+*.drawio text eol=lf
