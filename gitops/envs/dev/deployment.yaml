@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
         - name: quickkart
-          image: __ECR_REPO__:__IMAGE_TAG__
+          image: 564623062186.dkr.ecr.ap-south-1.amazonaws.com/argocd-lab-web:ef2e09b-manual
           ports:
             - containerPort: 8080
           envFrom:

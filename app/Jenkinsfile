@@ -3,9 +3,9 @@ pipeline {
 
   environment {
     AWS_REGION  = 'ap-south-1'
-    ECR_REPO    = '__ECR_REPO__'
+    ECR_REPO    = '564623062186.dkr.ecr.ap-south-1.amazonaws.com/argocd-lab-web'
     GITOPS_FILE = 'gitops/envs/dev/deployment.yaml'
-    LAB_REPO    = 'github.com/__GITHUB_USER__/argocd-jenkins-lab.git'
+    LAB_REPO    = 'github.com/discover-devops/argocd-jenkins-lab.git'
   }
 
   stages {

@@ -17,7 +17,7 @@ spec:
     spec:
       project: default
       source:
-        repoURL: https://github.com/__GITHUB_USER__/argocd-jenkins-lab.git
+        repoURL: https://github.com/discover-devops/argocd-jenkins-lab.git
         targetRevision: main
         path: 'gitops/envs/{{.env}}'
       destination:
